@@ -1,7 +1,8 @@
 import csv
 import json
 
-with open("nozzle_config.json") as f:
+with open("resources/nozzle_config.json") as f:
+# with open("nozzle_config.json") as f:
     nozzle_flows = json.load(f)
 
 def rgb_to_cmyk(red, green, blue) -> dict:
@@ -15,27 +16,25 @@ def rgb_to_cmyk(red, green, blue) -> dict:
 
 #! resources/->rgberr.csv,rgbw.csv,rick.csv
 inputFile = input("Input file: ")
-cmyks = []
 order = {}
 with open(inputFile) as csvfile:
     csvreader = csv.reader(csvfile)
     next(csvreader)
 
     for i, line in enumerate(csvreader):
-        print(line)
-        for item in line:
-            if (int(item) < 0 or int(item) > 255):
-                print(f"Invalid ink value on tile {i+1}.") 
-        cmyk = rgb_to_cmyk(int(line[0]), int(line[1]), int(line[2]))
-        cmyks.append(cmyk)
-    print(cmyks)
-
-for j in range(len(cmyks)):
-    temp = []
-    for colour in nozzle_flows.keys():
-        temp.append(cmyks[j][colour]*nozzle_flows[colour])
-    print(max(temp))
-    order[j+1] = max(temp)
+        cols = list(map(int, line))
+        calc = True
+        for j in range(len(cols)):
+            if (cols[j] < 0 or cols[j] > 255):
+                print(f"Invalid ink value on tile {i+1}.")
+                cmyk = { "cyan": 0, "magenta": 0, "yellow": 0, "black": 0 }
+                calc = False
+        if calc:
+            cmyk = rgb_to_cmyk(cols[0], cols[1], cols[2])
+        temp = []
+        for colour in nozzle_flows.keys():
+            temp.append(cmyk[colour]*nozzle_flows[colour])
+        order[i+1] = max(temp)
 
 for key in dict(sorted(order.items(), key=lambda item: item[1])).keys():
     print(key)
